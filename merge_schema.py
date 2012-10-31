@@ -33,18 +33,18 @@ def configOption():
     parser = OptionParser(usage)
     parser.add_option("-f","--from",dest="from_schema",help="from database schema file")
     parser.add_option("-t","--to",dest="to_schema",help="to database schema file")
-    parser.add_option("-o","--out",dest="out_schema",help="output database schema file")
+    parser.add_option("-o","--out",dest="merge_alters",help="output merge alters")
 
     (options, args) = parser.parse_args()
 
-    if not options.from_schema or not options.to_schema or not options.out_schema:
+    if not options.from_schema or not options.to_schema or not options.merge_alters:
         parser.error("You must input -f and -t and -o parameters");
 
     global opt_main
     opt_main = {}
     opt_main["from_schema"] = options.from_schema
     opt_main["to_schema"] = options.to_schema
-    opt_main["out_schema"] = options.out_schema
+    opt_main["merge_alters"] = options.merge_alters
 
 class SchemaObjects:
     def __init__(self,from_schema,to_schema):
