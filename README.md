@@ -4,7 +4,7 @@ Compare and merge MySQL schemas.
 
 **Samples**
 
-	~/merge_schema (master) $ python merge_schema.py -f from_schema.sql -t to_schema.sql -o out_schema.sql
+	~/merge_schema (master) $ python merge_schema.py -f from_schema.sql -t to_schema.sql -o merge_alters.sql
 	-- del_table
 	drop table del_table;
 
