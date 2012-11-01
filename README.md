@@ -2,6 +2,14 @@
 
 Compare and merge MySQL schemas.
 
+**Note**
+
+This script can't identify a rename action.
+
+    e.g:
+    rename table test_table1 to test_table2;
+    alter table test_table change c1 c2 int(10); 
+
 **Samples**
 
 	~/merge_schema (master) $ python merge_schema.py -f from_schema.sql -t to_schema.sql -o merge_alters.sql
