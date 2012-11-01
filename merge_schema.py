@@ -53,6 +53,7 @@ class SchemaObjects(object):
         self.run()
 
     def run(self):
+        self.objects_alters = ''
         self.return_objects = {}
         self.return_objects['tables'] = {}
         self.return_objects['servers'] = {}
@@ -67,6 +68,14 @@ class SchemaObjects(object):
             self.return_objects['tables'][table] = {}
             self.return_objects['tables'][table]['from_table'] = self._get_table_definitions(self.diff_tables[table]['from_table'])
             self.return_objects['tables'][table]['to_table']   = self._get_table_definitions(self.diff_tables[table]['to_table'])
+
+    def _record_alters(self,alter):
+        self.objects_alters += alter
+        self.objects_alters += "\n"
+        print alter
+
+    def get_objects_alters(self):
+        return self.objects_alters
 
     def get_schema_objects(self):
         return self.return_objects
@@ -115,17 +124,17 @@ class SchemaObjects(object):
                         return_tables[table]['from_table'] = from_tables[table]
                         return_tables[table]['to_table'] = to_tables[table]
                 else:
-                     print "-- "+table
-                     print "drop table "+table+";"
-                     print ""
+                     self._record_alters("-- %s" % (table))
+                     self._record_alters("drop table %s;" % (table))
+                     self._record_alters(" ")
 
             for table in to_tables:
                 if from_tables.has_key(table):
                     pass
                 else:
-                    print "-- "+table
-                    print to_tables[table]
-                    print ""
+                    self._record_alters("-- %s" % (table))
+                    self._record_alters("%s" % (to_tables[table]))
+                    self._record_alters(" ")
 
         return return_tables
 
@@ -178,6 +187,7 @@ class SchemaAlters(object):
         self.run()
 
     def run(self):
+        self.definitions_alters = ''
         self.return_alters = {}
         self.return_alters['tables'] = {}
         self.return_alters['servers'] = {}
@@ -186,9 +196,17 @@ class SchemaAlters(object):
         self.return_alters['triggers'] = {}
         self._alter_tables(self.diff_objects['tables'])
 
+    def _record_alters(self,alter):
+        self.definitions_alters += alter
+        self.definitions_alters += "\n"
+        print alter
+
+    def get_definitions_alters(self):
+        return self.definitions_alters
+
     def _alter_tables(self,schema_tables):
         for table in schema_tables:
-            print "-- "+table
+            self._record_alters("-- %s" % (table))
             from_table = schema_tables[table]['from_table']
             to_table = schema_tables[table]['to_table']
 
@@ -199,7 +217,7 @@ class SchemaAlters(object):
             self._foreign(table,from_table['foreign'],to_table['foreign'])
             self._fulltext(table,from_table['fulltext'],to_table['fulltext'])
             self._option(table,from_table['option'],to_table['option'])
-            print ""
+            self._record_alters(" ")
 
     def _column(self,table,from_column,to_column):
         for definition in from_column:
@@ -207,15 +225,15 @@ class SchemaAlters(object):
                 if from_column[definition] == to_column[definition]:
                     pass
                 else:
-                    print "alter table `"+table+"` modify column "+to_column[definition]+";"
+                    self._record_alters("alter table `%s` modify column %s;" % (table,to_column[definition]))
             else:
-                print "alter table `"+table+"` drop column "+definition+";"
+                self._record_alters("alter table `%s` drop column `%s`;" % (table,definition))
 
         for definition in to_column:
             if from_column.has_key(definition):
                 pass
             else:
-                print "alter table `"+table+"` add column "+to_column[definition]+";"
+                self._record_alters("alter table `%s` add column `%s`;" % (table,to_column[definition]))
 
     def _primary(self,table,from_primary,to_primary):
         if from_primary.has_key('primary'):
@@ -223,16 +241,16 @@ class SchemaAlters(object):
                 if from_primary['primary'] == to_primary['primary']:
                     pass
                 else:
-                    print "alter table `"+table+"` drop primary key;"
-                    print "alter table `"+table+"` add "+to_primary['primary']+";"
+                    self._record_alters("alter table `%s` drop primary key;" % (table))
+                    self._record_alters("alter table `%s` add %s;" % (table,to_primary['primary']))
             else:
-                print "alter table `"+table+"` drop primary key;"
+                self._record_alters("alter table `%s` drop primary key;" % (table))
 
         if to_primary.has_key('primary'):
             if from_primary.has_key('primary'):
                 pass
             else:
-                print "alter table `"+table+"` add "+to_primary['primary']+";"
+                self._record_alters("alter table `%s` add %s;" % (table,to_primary['primary']))
 
     def _unique(self,table,from_unique,to_unique):
         for definition in from_unique:
@@ -240,16 +258,16 @@ class SchemaAlters(object):
                 if from_unique[definition] == to_unique[definition]:
                     pass
                 else:
-                    print "alter table `"+table+"` drop unique key "+definition+";"
-                    print "alter table `"+table+"` add "+to_unique[definition]+";"
+                    self._record_alters("alter table `%s` drop unique key %s;" % (table,definition))
+                    self._record_alters("alter table `%s` add %s;" % (table,to_unique[definition]))
             else:
-                print "alter table `"+table+"` drop unique key "+definition+";"
+                self._record_alters("alter table `%s` drop unique key %s;" % (table,definition))
 
         for definition in to_unique:
             if from_unique.has_key(definition):
                 pass
             else:
-                print "alter table `"+table+"` add "+to_unique[definition]+";"
+                self._record_alters("alter table `%s` add %s;" % (table,to_unique[definition]))
 
     def _key(self,table,from_key,to_key):
         for definition in from_key:
@@ -257,16 +275,16 @@ class SchemaAlters(object):
                 if from_key[definition] == to_key[definition]:
                     pass
                 else:
-                    print "alter table `"+table+"` drop key "+definition+";"
-                    print "alter table `"+table+"` add "+to_key[definition]+";"
+                    self._record_alters("alter table `%s` drop key %s;" % (table,definition))
+                    self._record_alters("alter table `%s` add key %s;" % (table,to_key[definition]))
             else:
-                print "alter table `"+table+"` drop key "+definition+";"
+                self._record_alters("alter table `%s` drop key %s;" % (table,definition))
 
         for definition in to_key:
             if from_key.has_key(definition):
                 pass
             else:
-                print "alter table `"+table+"` add "+to_key[definition]+";"
+                self._record_alters("alter table `%s` add key %s;" % (table,to_key[definition]))
 
     def _foreign(self,table,from_foreign,to_foreign):
         for definition in from_foreign:
@@ -274,16 +292,16 @@ class SchemaAlters(object):
                 if from_foreign[definition] == to_foreign[definition]:
                     pass
                 else:
-                    print "alter table `"+table+"` drop foreign key "+definition+";"
-                    print "alter table `"+table+"` add "+to_foreign[definition]+";"
+                    self._record_alters("alter table `%s` drop foreign key `%s`;" % (table,definition))
+                    self._record_alters("alter table `%s` add %s;" % (table,to_foreign[definition]))
             else:
-                print "alter table `"+table+"` drop foreign key "+definition+";"
+                self._record_alters("alter table `%s` drop foreign key `%s`;" % (table,definition))
 
         for definition in to_foreign:
             if from_foreign.has_key(definition):
                 pass
             else:
-                print "alter table `"+table+"` add "+to_foreign[definition]+";"
+                self._record_alters("alter table `%s` add %s;" % (table,to_foreign[definition]))
 
     def _fulltext(self,table,from_fulltext,to_fulltext):
         for definition in from_fulltext:
@@ -291,16 +309,16 @@ class SchemaAlters(object):
                 if from_fulltext[definition] == to_fulltext[definition]:
                     pass
                 else:
-                    print "alter table `"+table+"` drop fulltext key "+definition+";"
-                    print "alter table `"+table+"` add "+to_fulltext[definition]+";"
+                    self._record_alters("alter table `%s` drop fulltext key `%s`;" % (table,definition))
+                    self._record_alters("alter table `%s` add %s;" % (table,to_fulltext[definition]))
             else:
-                print "alter table `"+table+"` drop fulltext key "+definition+";"
+                self._record_alters("alter table `%s` drop fulltext key `%s`;" % (table,definition))
 
         for definition in to_fulltext:
             if from_fulltext.has_key(definition):
                 pass
             else:
-                print "alter table `"+table+"` add "+to_fulltext[definition]+";"
+                self._record_alters("alter table `%s` add %s;" % (table,to_fulltext[definition]))
 
     def _option(self,table,from_option,to_option):
         if from_option.has_key('option'):
@@ -308,17 +326,23 @@ class SchemaAlters(object):
                 if from_option['option'] == to_option['option']:
                     pass
                 else:
-                    print "alter table `"+table+"` "+to_option['option']+";"
-            else:
-                print "alter table `"+table+"` drop option key;"
+                    self._record_alters("alter table `%s` %s;" % (table,to_option['option']))
 
 
 def main():
     config_option()
+
     current_objects = SchemaObjects(opt_main["from_schema"],opt_main["to_schema"])
     schema_objects = current_objects.get_schema_objects()
+    objects_alters = current_objects.get_objects_alters()
 
-    schema_alters = SchemaAlters(schema_objects)
+    current_alters = SchemaAlters(schema_objects)
+    definitions_alters = current_alters.get_definitions_alters()
+
+    merge_alters = open(opt_main["merge_alters"],'w')
+    merge_alters.write(objects_alters)
+    merge_alters.write(definitions_alters)
+    merge_alters.close()
 
 if __name__ == "__main__":
     main()
