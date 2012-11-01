@@ -27,7 +27,7 @@ __prog__= "merge_schema"
 __version__="0.1-beta"
 
 
-def configOption():
+def config_option():
     usage =  "usage: %prog [options] arg \n"
     usage += " e.g.: %prog -f from_schema.sql -t to_schema.sql -o merge_schema.sql"
     parser = OptionParser(usage)
@@ -46,7 +46,7 @@ def configOption():
     opt_main["to_schema"] = options.to_schema
     opt_main["merge_alters"] = options.merge_alters
 
-class SchemaObjects:
+class SchemaObjects(object):
     def __init__(self,from_schema,to_schema):
         self.from_schema = from_schema
         self.to_schema   = to_schema
@@ -60,30 +60,30 @@ class SchemaObjects:
         self.return_objects['routines'] = {}
         self.return_objects['triggers'] = {}
 
-        self.from_tables = self.getTables(self.from_schema)
-        self.to_tables = self.getTables(self.to_schema)
-        self.diff_tables = self.diffTables(self.from_tables,self.to_tables)
+        self.from_tables = self._get_tables(self.from_schema)
+        self.to_tables = self._get_tables(self.to_schema)
+        self.diff_tables = self._get_diff_tables(self.from_tables,self.to_tables)
         for table in self.diff_tables:
             self.return_objects['tables'][table] = {}
-            self.return_objects['tables'][table]['from_table'] = self.getTableDefinitions(self.diff_tables[table]['from_table'])
-            self.return_objects['tables'][table]['to_table'] = self.getTableDefinitions(self.diff_tables[table]['to_table'])
+            self.return_objects['tables'][table]['from_table'] = self._get_table_definitions(self.diff_tables[table]['from_table'])
+            self.return_objects['tables'][table]['to_table']   = self._get_table_definitions(self.diff_tables[table]['to_table'])
 
-    def get_objects(self):
+    def get_schema_objects(self):
         return self.return_objects
 
-    def getServers(self,schema_name):
+    def _get_servers(self,schema_name):
         pass
 
-    def getEvents(self,schema_name):
+    def _get_events(self,schema_name):
         pass
 
-    def getRoutines(self,schema_name):
+    def _get_routines(self,schema_name):
         pass
 
-    def getTriggers(self,schema_name):
+    def _get_triggers(self,schema_name):
         pass
 
-    def getTables(self,schema_name):
+    def _get_tables(self,schema_name):
         try:
             schema_file = open(schema_name, 'r')
         except IOError:
@@ -103,50 +103,7 @@ class SchemaObjects:
 
             return return_tables
 
-    def getTableDefinitions(self,schema_table):
-        return_definitions = {}
-        return_definitions['column'] = {}
-        return_definitions['primary'] = {}
-        return_definitions['unique'] = {}
-        return_definitions['key'] = {}
-        return_definitions['foreign'] = {}
-        return_definitions['fulltext'] = {}
-        return_definitions['option'] = {}
-
-        table_definitions = schema_table.split('\n')
-
-        for definition in table_definitions:
-            column_name = re.match(r"(\s*\`)([^`]*)(\`.*)", definition)
-            if column_name:
-                return_definitions['column'][column_name.group(2)] = re.match(r"([^`]*)([^,]*)(,?)", definition).group(2)
-
-            primary_name = re.match(r"(\s*PRIMARY KEY\s*)", definition)
-            if primary_name:
-                return_definitions['primary']['primary'] = re.match(r"(\s*)(PRIMARY KEY \(.*\))(,?)", definition).group(2)
-
-            unique_name = re.match(r"(\s*UNIQUE KEY \`)([^`]*)(\`.*)", definition)
-            if unique_name:
-                return_definitions['unique'][unique_name.group(2)] = re.match(r"(\s*)(UNIQUE KEY[^,]*)(,?)", definition).group(2)
-
-            key_name = re.match(r"(\s*KEY \`)([^`]*)(\`.*)", definition)
-            if key_name:
-                return_definitions['key'][key_name.group(2)] = re.match(r"(\s*)(KEY[^,]*)(,?)", definition).group(2)
-
-            foreign_name = re.match(r"(\s*CONSTRAINT \`)([^`]*)(\`.*)", definition)
-            if foreign_name:
-                return_definitions['foreign'][foreign_name.group(2)] = re.match(r"(\s*)(CONSTRAINT[^,]*)(,?)", definition).group(2)
-
-            fulltext_name = re.match(r"(\s*FULLTEXT KEY \`)([^`]*)(\`.*)", definition)
-            if fulltext_name:
-                return_definitions['fulltext'][fulltext_name.group(2)] = re.match(r"(\s*)(FULLTEXT KEY[^,]*)(,?)", definition).group(2)
-
-            option_name = re.match(r"(\)\s*ENGINE=.*)", definition)
-            if option_name:
-                return_definitions['option']['option'] = re.match(r"(\)\s*)(ENGINE[^;]*)(;?)", definition).group(2)
-
-        return return_definitions
-
-    def diffTables(self,from_tables,to_tables):
+    def _get_diff_tables(self,from_tables,to_tables):
         return_tables = {}
         if from_tables and to_tables:
             for table in from_tables:
@@ -172,7 +129,50 @@ class SchemaObjects:
 
         return return_tables
 
-class SchemaAlters:
+    def _get_table_definitions(self,schema_table):
+        return_definitions = {}
+        return_definitions['column'] = {}
+        return_definitions['primary'] = {}
+        return_definitions['unique'] = {}
+        return_definitions['key'] = {}
+        return_definitions['foreign'] = {}
+        return_definitions['fulltext'] = {}
+        return_definitions['option'] = {}
+
+        table_definitions = schema_table.split('\n')
+
+        for definition in table_definitions:
+            column_name = re.match(r"(\s*\`)([^`]*)(\`.*)", definition)
+            if column_name:
+                return_definitions['column'][column_name.group(2)] = re.match(r"([^`]*)([^,]*)(,?)", definition).group(2)
+
+            primary_name = re.match(r"(\s*PRIMARY KEY\s*)", definition)
+            if primary_name:
+                return_definitions['primary']['primary'] = re.match(r"(\s*)(PRIMARY KEY \(.*\))(,?)", definition).group(2)
+
+            unique_name = re.match(r"(\s*UNIQUE KEY \`)([^`]*)(\`.*)", definition)
+            if unique_name:
+                return_definitions['unique'][unique_name.group(2)] = re.match(r"(\s*)(UNIQUE KEY.*\))(,?)", definition).group(2)
+
+            key_name = re.match(r"(\s*KEY \`)([^`]*)(\`.*)", definition)
+            if key_name:
+                return_definitions['key'][key_name.group(2)] = re.match(r"(\s*)(KEY.*\))(,?)", definition).group(2)
+
+            foreign_name = re.match(r"(\s*CONSTRAINT \`)([^`]*)(\`.*)", definition)
+            if foreign_name:
+                return_definitions['foreign'][foreign_name.group(2)] = re.match(r"(\s*)(CONSTRAINT[^,]*)(,?)", definition).group(2)
+
+            fulltext_name = re.match(r"(\s*FULLTEXT KEY \`)([^`]*)(\`.*)", definition)
+            if fulltext_name:
+                return_definitions['fulltext'][fulltext_name.group(2)] = re.match(r"(\s*)(FULLTEXT KEY.*\))(,?)", definition).group(2)
+
+            option_name = re.match(r"(\)\s*ENGINE=.*)", definition)
+            if option_name:
+                return_definitions['option']['option'] = re.match(r"(\)\s*)(ENGINE[^;]*)(;?)", definition).group(2)
+
+        return return_definitions
+
+class SchemaAlters(object):
     def __init__(self,schema_objects):
         self.diff_objects = schema_objects
         self.run()
@@ -184,9 +184,9 @@ class SchemaAlters:
         self.return_alters['events'] = {}
         self.return_alters['routines'] = {}
         self.return_alters['triggers'] = {}
-        self.alterTables(self.diff_objects['tables'])
+        self._alter_tables(self.diff_objects['tables'])
 
-    def alterTables(self,schema_tables):
+    def _alter_tables(self,schema_tables):
         for table in schema_tables:
             print "-- "+table
             from_table = schema_tables[table]['from_table']
@@ -314,9 +314,9 @@ class SchemaAlters:
 
 
 def main():
-    configOption()
-    diff_objects = SchemaObjects(opt_main["from_schema"],opt_main["to_schema"])
-    schema_objects = diff_objects.get_objects()
+    config_option()
+    current_objects = SchemaObjects(opt_main["from_schema"],opt_main["to_schema"])
+    schema_objects = current_objects.get_schema_objects()
 
     schema_alters = SchemaAlters(schema_objects)
 
