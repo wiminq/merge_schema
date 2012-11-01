@@ -276,7 +276,7 @@ class SchemaAlters(object):
                     pass
                 else:
                     self._record_alters("alter table `%s` drop key %s;" % (table,definition))
-                    self._record_alters("alter table `%s` add key %s;" % (table,to_key[definition]))
+                    self._record_alters("alter table `%s` add %s;" % (table,to_key[definition]))
             else:
                 self._record_alters("alter table `%s` drop key %s;" % (table,definition))
 
@@ -284,7 +284,7 @@ class SchemaAlters(object):
             if from_key.has_key(definition):
                 pass
             else:
-                self._record_alters("alter table `%s` add key %s;" % (table,to_key[definition]))
+                self._record_alters("alter table `%s` add %s;" % (table,to_key[definition]))
 
     def _foreign(self,table,from_foreign,to_foreign):
         for definition in from_foreign:

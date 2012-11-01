@@ -26,7 +26,7 @@ Compare and merge MySQL schemas.
     alter table `del_column` drop column `c3`;
      
     -- add_key
-    alter table `add_key` add key KEY `ind_c` (`c1`,`c2`);
+    alter table `add_key` add KEY `ind_c` (`c1`,`c2`);
      
     -- del_fulltext
     alter table `del_fulltext` drop fulltext key `ft_c1`;
@@ -42,7 +42,7 @@ Compare and merge MySQL schemas.
      
     -- mod_key
     alter table `mod_key` drop key ind_c;
-    alter table `mod_key` add key KEY `ind_c` (`c1`,`c2`);
+    alter table `mod_key` add KEY `ind_c` (`c1`,`c2`);
      
     -- del_foreign
     alter table `del_foreign` drop foreign key `fk_id2`;
