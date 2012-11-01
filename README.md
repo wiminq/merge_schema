@@ -6,7 +6,7 @@ Compare and merge MySQL schemas.
 
 This script can't identify a rename action.
 
-    e.g:
+    -- e.g.:
     rename table test_table1 to test_table2;
     alter table test_table change c1 c2 int(10); 
 
